@@ -7,7 +7,7 @@ This project implements a real-time data pipeline for continuous data ingestion 
 ![archiecture-diagram](./notes/images/scd-archiecture.drawio.png)
 
 ### Tech Stack:
-➔ Languages: Python3, JavaScript, SQL
+➔ Languages: Python3, JavaScript, SQL </br>
 ➔ Services: NiFi, Amazon S3, Snowflake, Amazon EC2, Docker
 
 ### Dataset Description:
