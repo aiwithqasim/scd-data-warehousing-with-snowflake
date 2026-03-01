@@ -1,0 +1,2 @@
+ec2-scd-warehousing-qh
+kp-scd-warehousing-qh
