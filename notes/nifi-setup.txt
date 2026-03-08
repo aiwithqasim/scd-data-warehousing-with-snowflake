@@ -1,5 +1,5 @@
 - create a processor group pg-scd-warehousing-qh and 
 - then create following processor by connecting on SUCCESS criteria
-    - ListFile
+    - ListFile (Input Directory = /opt/workspace/nifi/data)
     - FecthFile
-    - PutS3Object
+    - PutS3Object (buket=s3-scd-warehousing-us-west-2-qh, access, secretkeys)
