@@ -1,0 +1,5 @@
+- create a processor group pg-scd-warehousing-qh and 
+- then create following processor by connecting on SUCCESS criteria
+    - ListFile
+    - FecthFile
+    - PutS3Object

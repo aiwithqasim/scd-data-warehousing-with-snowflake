@@ -1,0 +1,3 @@
+we'll follow the convention <service-name><project-name><region><unique-suffix>
+
+ec2-scd-warehousing-us-west-2-qh
