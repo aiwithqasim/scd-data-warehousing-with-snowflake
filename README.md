@@ -120,8 +120,84 @@ cd docker_exp && docker-compose up -d
 
 ### SCD Types
 
-- **Type 1** — Overwrites existing data with the latest values. No history is kept.
-- **Type 2** — Preserves full history. Each change closes the current record (`end_time`, `is_current = false`) and inserts a new active record.
+- **Type 1** : Overwrites existing data with the latest values. No history is kept.
+- **Type 2** : Preserves full history. Each change closes the current record (`end_time`, `is_current = false`) and inserts a new active record.
+
+---
+
+### Usage
+
+#### 1. Fork the Repository
+
+Click **Fork** on [GitHub](https://github.com/aiwithqasim/scd-data-warehousing-with-snowflake) to create your own copy, then clone it:
+
+```bash
+git clone https://github.com/<your-username>/scd-data-warehousing-with-snowflake.git
+cd scd-data-warehousing-with-snowflake
+```
+
+#### 2. Configure AWS Credentials
+
+```bash
+aws configure
+# Enter your AWS Access Key ID, Secret, region (us-west-2), and output format
+```
+
+#### 3. Provision Infrastructure
+
+```bash
+cd terraform
+terraform init
+terraform apply --auto-approve
+```
+
+Fix PEM permissions on Windows:
+
+```bash
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /inheritance:r
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /grant:r "%USERNAME%:R"
+```
+
+#### 4. Deploy Docker Services on EC2
+
+```bash
+# Copy docker-compose files to EC2
+scp -r -i "ec2-scd-warehousing-us-west-2-tf.pem" docker_exp ec2-user@<EC2_PUBLIC_IP>:/home/ec2-user/docker_exp
+
+# SSH with port forwarding
+ssh -i "ec2-scd-warehousing-us-west-2-tf.pem" ec2-user@<EC2_PUBLIC_IP> -L 2080:localhost:2080 -L 4888:localhost:4888
+
+# Start services
+cd docker_exp && docker-compose up -d
+```
+
+- NiFi UI: `http://localhost:2080/nifi/`
+- JupyterLab: `http://localhost:4888/lab`
+
+#### 5. Set Up Snowflake
+
+Run the SQL scripts in `snowflake/` in order to create the database, tables, stream, pipe, and tasks.
+
+#### 6. Tear Down
+
+```bash
+cd terraform
+terraform destroy --auto-approve
+```
+
+---
+
+### Contributing
+
+Contributions are welcome! Please use the following:
+
+- **Bug or question?** → [Open an Issue](https://github.com/aiwithqasim/scd-data-warehousing-with-snowflake/issues/new)
+- **Improvement or fix?** → Fork the repo, make your changes, and [open a Pull Request](https://github.com/aiwithqasim/scd-data-warehousing-with-snowflake/compare)
+
+When opening a PR please:
+1. Branch off `main` with a descriptive branch name (e.g. `fix/nifi-flow`, `feat/scd-type3`)
+2. Keep changes focused and minimal
+3. Describe what was changed and why in the PR description
 
 ---
 
