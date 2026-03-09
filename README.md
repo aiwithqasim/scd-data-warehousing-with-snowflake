@@ -1,105 +1,135 @@
 ## Project: Slowly Changing Dimensions in Snowflake Using Streams and Tasks
 
 ### Introduction
+
 This project implements a real-time data pipeline for continuous data ingestion and transformation into a Snowflake data warehouse. It leverages various cloud technologies to achieve Change Data Capture (CDC) and Slowly Changing Dimensions (SCD) for historical data management.
 
 ### Architecture
-![archiecture-diagram](./notes/images/scd-archiecture.drawio.png)
 
-### Tech Stack:
-➔ Languages: Python3, JavaScript, SQL </br>
-➔ Services: NiFi, Amazon S3, Snowflake, Amazon EC2, Docker
+![architecture-diagram](./notes/images/scd-archiecture.drawio.png)
 
-### Dataset Description:
-In this project, we use the faker library from Python to generate records of users and store the records in CSV format with the name, including the current system time. The data includes the following parameters:
-- Customer_id
-- First_name
-- Last_name
-- Email
-- Street
-- State
-- Country
+### Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Languages | Python 3, SQL |
+| Infrastructure as Code | Terraform |
+| Data Generation | Python Faker library |
+| Data Movement | Apache NiFi (Docker) |
+| Cloud Storage | Amazon S3 |
+| Compute | Amazon EC2 |
+| Data Warehouse | Snowflake |
+| Containerization | Docker, Docker Compose |
+
+### Dataset
+
+Customer records are generated using the Python `faker` library and stored as timestamped CSV files with the following fields:
+
+- `customer_id`
+- `first_name`
+- `last_name`
+- `email`
+- `street`
+- `city`
+- `state`
+- `country`
+
+---
+
+### Infrastructure (Terraform)
+
+All AWS resources are provisioned via Terraform. See [`terraform/terrafrom-commands.md`](./terraform/terrafrom-commands.md) for full setup instructions.
+
+**Resources created:**
+
+| Resource | Name |
+|---|---|
+| S3 Bucket | `s3-scd-warehousing-us-west-2-tf` |
+| EC2 Instance | `ec2-scd-warehousing-us-west-2-tf` |
+| IAM Role | `ec2-scd-warehousing-us-west-2-tf-role` |
+| Instance Profile | `ec2-scd-warehousing-us-west-2-tf-profile` |
+| Security Group | `ec2-scd-warehousing-us-west-2-tf-sg` |
+| Key Pair | `ec2-scd-warehousing-us-west-2-tf-key` |
+
+**Quick start:**
+
+```bash
+cd terraform
+terraform init
+terraform apply --auto-approve
+```
+
+Fix PEM permissions on Windows after apply:
+
+```
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /inheritance:r
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /grant:r "%USERNAME%:R"
+```
+
+---
 
 ### Process Flow
-- Data Generation (EC2): Python scripts with Faker generate data and store it in a designated folder.
-- Data Movement (Apache NiFi): Apache NiFi monitors the folder and uploads newly created files to the designated S3 bucket.
-- Data Ingestion (Snowpipe): Snowpipe automatically ingests data from the S3 bucket into a staging table in Snowflake.
-- Data Transformation (Snowflake Stored Procedure): A scheduled task triggers the stored procedure every minute:
-- MERGE Command (CDC): Inserts, updates, or deletes data in the target table based on the staging table.
-- Truncate Staging Table: Prepares the staging table for the next batch of data.
-- Historical Data Management (Snowflake Stream): A Snowflake Stream captures changes to the actual table over time.
-- SCD(Slowly Changing Dimension) Implementation: The captured data populates a historical table designed with SCD techniques.
 
-### Key Takeaways:
-- Understanding the basics of SCD and its different types.
-- Visualizing the complete Architecture of the system
-- Understanding the project and how to use AWS EC2 Instance and security groups.
-- Introduction to Docker.
-- Docker Installation and execution.
-- Usage of docker-composer and starting all tools.
-- Creation of Access key.
-- Creation of S3 bucket.
-- Test Data preparation.
-- Understanding basics of NiFi.
-- Integrating NiFi with S3.
-- Implementing NiFi flow setup.
-- Introduction to different Snowflake components.
-- Implementation of different Snowflake components.
-- Implementation of SCD Type-1 and Type-2
+1. **Data Generation (EC2)** — Python scripts using `faker` generate customer CSV files and place them in a watched folder inside the NiFi container.
 
-### Benefits
-- Real-time Data Pipeline: Enables near real-time data updates in Snowflake.
-- Change Data Capture (CDC): Ensures the target table reflects the latest data through inserts, updates, and deletes.
-- Slowly Changing Dimensions (SCD): Maintains data integrity in the historical table through SCD techniques.
-- Scalability and Manageability: Cloud-based technologies offer scalability for handling large data volumes.
+2. **Data Movement (Apache NiFi)** — NiFi monitors the folder with a `ListFile → FetchFile → PutS3Object` flow and uploads new files to the S3 bucket.
 
-### FAQs
+3. **Data Ingestion (Snowpipe)** — Snowpipe auto-ingests CSV files from S3 into the `customer_raw` staging table in Snowflake.
 
-#### What is Slowly Changing Dimensions?
-The terms "facts" and "dimensions" are used in data warehousing. A fact is a piece of numerical data, such as a sale or clicks. Facts are stored in fact tables, linked to a variety of dimension tables via foreign keys that act as companion tables to the facts. Dimension Attributes are the different columns in a dimension table that provide descriptive features of the facts.
+4. **Data Transformation (Snowflake Task + Stored Procedure)** — A scheduled task runs every minute and triggers a stored procedure that:
+   - Merges `customer_raw` into the `customer` table (CDC: insert / update / delete)
+   - Truncates `customer_raw` to prepare for the next batch
 
-A Slowly Changing Dimension (SCD) stores and maintains both current and historical data across time in a data warehouse. It is regarded as one of the essential ETL jobs for monitoring the history of dimension records, and it has been implemented. Customer, geography, and employee are examples of such dimensions.
+5. **Change Capture (Snowflake Stream)** — A stream on the `customer` table captures all row-level changes.
 
-SCD may be approached in a variety of ways. The most popular ones are:
+6. **Historical Data (SCD)** — Captured changes populate the `customer_history` table using SCD Type-1 and Type-2 techniques.
 
-- **Type 0**: This is a passive method. When the dimensions change in this approach, no particular
-action is taken. Some dimension data can be kept the same as when it was initially entered,
-while others may be replaced.
+---
 
-- **Type 1**: The new data overwrites the previous data in a Type 1 SCD. As a result, the existing data
-is lost because it is not saved elsewhere. This is the most common sort of dimension one will
-encounter. To make a Type 1 SCD, one does not need to provide further information.
+### Snowflake Objects
 
-- **Type 2**: The complete history of values is preserved in a Type 2 SCD. The current record is closed
-when the value of a particular attribute changes. With the updated data values, a new record is
-generated, which then becomes the current record. Each record's adequate time and expiry
-time are used to determine the period during which the record was active.
+| Object | Name | Purpose |
+|---|---|---|
+| Database | `scd_demo` | Project database |
+| Schema | `scd2` | Project schema |
+| Table | `customer_raw` | Staging table (Snowpipe target) |
+| Table | `customer` | Current state table |
+| Table | `customer_history` | Historical SCD table |
+| Stream | `customer_table_changes` | Captures changes on `customer` |
+| Pipe | `customer_s3_pipe` | Auto-ingest from S3 |
+| Warehouse | `COMPUTE_WH` | XSMALL, auto-suspends after 120s |
 
-- **Type 3**: For some chosen dimensions, a Type 3 SCD maintains two copies of values. The previous
-and current values of the chosen attribute are saved in each record. When the value of any of
-the chosen attributes changes, the latest value is recorded as the current value, and the
-previous value is saved as the old value in a new column.
+---
 
-#### NiFi
-Apache NiFi is a data logistics platform that automates data transfer across systems. It gives real-time control over data transportation from any source to any destination, making it simple to handle.
+### Docker Services
 
-#### Docker
-Docker is a containerization platform that is available as an open-source project. It allows developers to bundle programs into containers, which are standardized executable components that combine application source code with the OS libraries and dependencies needed to run that code in any environment.
+NiFi and JupyterLab run on the EC2 instance via Docker Compose. NiFi and JupyterLab are accessed locally via SSH port forwarding (no extra security group rules needed).
 
-#### Amazon EC2
-In the Amazon Web Services Cloud, the Amazon Elastic Compute Cloud (Amazon EC2) offers scalable computing capability. The user will not have to buy hardware upfront if Amazon EC2 is used. Amazon EC2 allows developers to launch multiple virtual servers based on usage, set security and networking, and manage storage.
+```bash
+# Transfer docker-compose to EC2 and start services
+scp -r -i "ec2-scd-warehousing-us-west-2-tf.pem" docker_exp ec2-user@<EC2_PUBLIC_DNS>:/home/ec2-user/docker_exp
+ssh -i "ec2-scd-warehousing-us-west-2-tf.pem" ec2-user@<EC2_PUBLIC_DNS> -L 2080:localhost:2080 -L 4888:localhost:4888
 
-#### Amazon S3
-Amazon S3 is an object storage service that provides manufacturing scalability, data availability, security, and performance. Users may save and retrieve any quantity of data using Amazon S3 at any time and from any location.
+cd docker_exp && docker-compose up -d
+```
 
-#### Snowflake
-Snowflake is a data storage, processing, and analytics platform that blends a unique SQL query engine with a cloud-native architecture. Snowflake delivers all the features of an enterprise analytic database to the user. Snowflake components include:
-- Warehouse/Virtual Warehouse
-- Database and Schema
-- Table
-- View
-- Stored procedure
-- Snowpipe
-- Stream
-- Task
+- NiFi UI: `http://localhost:2080/nifi/`
+- JupyterLab: `http://localhost:4888/lab`
 
+---
+
+### SCD Types
+
+- **Type 1** — Overwrites existing data with the latest values. No history is kept.
+- **Type 2** — Preserves full history. Each change closes the current record (`end_time`, `is_current = false`) and inserts a new active record.
+
+---
+
+### Key Takeaways
+
+- End-to-end cloud data pipeline from data generation to historical storage
+- Infrastructure as Code with Terraform for repeatable AWS provisioning
+- Change Data Capture (CDC) using Snowflake MERGE and Streams
+- SCD Type-1 and Type-2 implementation in Snowflake
+- Apache NiFi for automated file-to-S3 data movement
+- Docker for portable service deployment on EC2
