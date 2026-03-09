@@ -70,19 +70,19 @@ icacls "ec2-scd-warehousing-us-west-2-tf.pem" /grant:r "%USERNAME%:R"
 
 ### Process Flow
 
-1. **Data Generation (EC2)** — Python scripts using `faker` generate customer CSV files and place them in a watched folder inside the NiFi container.
+1. **Data Generation (EC2)** : Python scripts using `faker` generate customer CSV files and place them in a watched folder inside the NiFi container.
 
-2. **Data Movement (Apache NiFi)** — NiFi monitors the folder with a `ListFile → FetchFile → PutS3Object` flow and uploads new files to the S3 bucket.
+2. **Data Movement (Apache NiFi)** : NiFi monitors the folder with a `ListFile → FetchFile → PutS3Object` flow and uploads new files to the S3 bucket.
 
-3. **Data Ingestion (Snowpipe)** — Snowpipe auto-ingests CSV files from S3 into the `customer_raw` staging table in Snowflake.
+3. **Data Ingestion (Snowpipe)** : Snowpipe auto-ingests CSV files from S3 into the `customer_raw` staging table in Snowflake.
 
-4. **Data Transformation (Snowflake Task + Stored Procedure)** — A scheduled task runs every minute and triggers a stored procedure that:
+4. **Data Transformation (Snowflake Task + Stored Procedure)** : A scheduled task runs every minute and triggers a stored procedure that:
    - Merges `customer_raw` into the `customer` table (CDC: insert / update / delete)
    - Truncates `customer_raw` to prepare for the next batch
 
-5. **Change Capture (Snowflake Stream)** — A stream on the `customer` table captures all row-level changes.
+5. **Change Capture (Snowflake Stream)** : A stream on the `customer` table captures all row-level changes.
 
-6. **Historical Data (SCD)** — Captured changes populate the `customer_history` table using SCD Type-1 and Type-2 techniques.
+6. **Historical Data (SCD)** : Captured changes populate the `customer_history` table using SCD Type-1 and Type-2 techniques.
 
 ---
 
