@@ -1,0 +1,11 @@
+- create a processor group pg-scd-warehousing-qh and 
+- then create following processor by connecting on SUCCESS criteria
+    - ListFile (Input Directory = /opt/workspace/nifi/data)
+    - FecthFile
+    - PutS3Object (buket=s3-scd-warehousing-us-west-2-qh, access, secretkeys)
+
+In case of nifi errors/issues in the container, change to one of the following nifi image versions in docker-compose.yml file:
+
+1) apache/nifi:1.14.0
+2) apache/nifi:1.12.0
+3) pavansrivathsa/nifi
