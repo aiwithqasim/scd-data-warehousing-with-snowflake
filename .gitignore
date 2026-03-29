@@ -1,4 +1,39 @@
-zip
+# Archives
+*.zip
+*.tar.gz
+
+# Docs & diagrams
+docs/
+*.drawio
 *.pem
+
+# Notebooks (sensitive/presentation)
 presentation.ipynb
-scd-archiecture.drawio
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/terraform.tfstate.d/
+**/tfplan
+**/tfplan.*
+**/*.tfvars
+**/*.tfvars.json
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+**/crash.log
+**/crash.*.log
+
+# AWS credentials & secrets
+.env
+.env.*
+*.env
+credentials
+**/secrets.tf
+
+# OS
+.DS_Store
+Thumbs.db

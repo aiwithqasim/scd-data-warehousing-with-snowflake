@@ -1,0 +1,17 @@
+we'll follow the convention <service-name><project-name><region><unique-suffix>
+
+ec2-scd-warehousing-us-west-2-qh
+kp-scd-warehousing-qh
+s3-scd-warehousing-us-west-2-qh
+
+role-scd-warehousing-us-west-2-qh
+policy-scd-warehousing-us-west-2-qh
+evt-ntf-scd-warehousing-us-west-2-qh
+
+
+
+pg-scd-warehousing-qh
+
+role-scd-warehousing-us-west-2-qh
+policy-scd-warehousing-us-west-2-qh
+evt-ntf-scd-warehousing-us-west-2-qh

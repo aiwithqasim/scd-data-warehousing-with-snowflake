@@ -1,0 +1,47 @@
+### Initialize Terraform
+Sets up your working directory to use Terraform. Downloads providers and prepares the environment.
+
+terraform init
+
+
+### Preview Terraform Plan
+# Shows the changes Terraform will make to your infrastructure without actually applying them.
+
+terraform plan
+
+
+### Validate Terraform Configuration
+# Checks your Terraform files for syntax errors and ensures the configuration is correct.
+
+terraform validate
+
+
+### Apply Terraform Changes
+# Applies your Terraform configuration to create or update resources interactively.
+
+terraform apply
+
+
+### Apply Terraform Changes Automatically
+# Applies all changes without asking for confirmation (non-interactive).
+
+terraform apply --auto-approve
+
+
+### Destroy Terraform Resources
+# Removes all resources managed by your Terraform configuration.
+
+terraform destroy
+
+
+
+### Improve .pem File Permissions on Windows
+# Adjusts permissions for the EC2 key file created by Terraform to make it secure.
+# This is necessary if Windows gives a warning about open permissions.
+
+
+# Remove inherited permissions
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /inheritance:r
+
+# Grant read-only access to the current user
+icacls "ec2-scd-warehousing-us-west-2-tf.pem" /grant:r "%USERNAME%:R"
