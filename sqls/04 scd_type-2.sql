@@ -334,6 +334,12 @@ SELECT *
 FROM customer_history
 WHERE is_current = FALSE;
 
+-- Check deleted records
+SELECT * 
+FROM customer_history
+WHERE customer_id = 136
+  AND first_name = 'Kim';
+
 
 -- =========================================================
 -- Task Monitoring
