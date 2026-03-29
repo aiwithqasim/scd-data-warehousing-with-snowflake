@@ -8,8 +8,6 @@ role-scd-warehousing-us-west-2-qh
 policy-scd-warehousing-us-west-2-qh
 evt-ntf-scd-warehousing-us-west-2-qh
 
-
-
 pg-scd-warehousing-qh
 
 role-scd-warehousing-us-west-2-qh
