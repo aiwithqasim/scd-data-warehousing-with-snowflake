@@ -1,45 +1,75 @@
-use role sysadmin;
-create warehouse if not exists COMPUTE_WH with warehouse_size = 'XSMALL' auto_suspend = 120;
+-- =========================================================
+-- Warehouse Setup
+-- =========================================================
+USE ROLE SYSADMIN;
 
-create database if not exists scd_demo;
-use database scd_demo;
-create schema if not exists scd2;
-use schema scd2;
-show tables;
+CREATE WAREHOUSE IF NOT EXISTS compute_wh
+WITH 
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND = 120;
 
-create or replace table customer (
-     customer_id number,
-     first_name varchar,
-     last_name varchar,
-     email varchar,
-     street varchar,
-     city varchar,
-     state varchar,
-     country varchar,
-     update_timestamp timestamp_ntz default current_timestamp());
+-- =========================================================
+-- Database & Schema Setup
+-- =========================================================
+CREATE DATABASE IF NOT EXISTS scd_demo;
+USE DATABASE scd_demo;
 
-create or replace table customer_history (
-     customer_id number,
-     first_name varchar,
-     last_name varchar,
-     email varchar,
-     street varchar,
-     city varchar,
-     state varchar,
-     country varchar,
-     start_time timestamp_ntz default current_timestamp(),
-     end_time timestamp_ntz default current_timestamp(),
-     is_current boolean
-     );
-     
-create or replace table customer_raw (
-     customer_id number,
-     first_name varchar,
-     last_name varchar,
-     email varchar,
-     street varchar,
-     city varchar,
-     state varchar,
-     country varchar);
-     
-create or replace stream customer_table_changes on table customer;
+CREATE SCHEMA IF NOT EXISTS scd2;
+USE SCHEMA scd2;
+
+-- =========================================================
+-- Validation
+-- =========================================================
+SHOW TABLES;
+
+SELECT CURRENT_TIMESTAMP();
+
+-- =========================================================
+-- Table Creation
+-- =========================================================
+
+-- Base table (source of truth)
+CREATE OR REPLACE TABLE customer (
+    customer_id      NUMBER,
+    first_name       VARCHAR,
+    last_name        VARCHAR,
+    email            VARCHAR,
+    street           VARCHAR,
+    city             VARCHAR,
+    state            VARCHAR,
+    country          VARCHAR,
+    update_timestamp TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- SCD Type 2 history table
+CREATE OR REPLACE TABLE customer_history (
+    customer_id  NUMBER,
+    first_name   VARCHAR,
+    last_name    VARCHAR,
+    email        VARCHAR,
+    street       VARCHAR,
+    city         VARCHAR,
+    state        VARCHAR,
+    country      VARCHAR,
+    start_time   TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    end_time     TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    is_current   BOOLEAN
+);
+
+-- Staging / raw ingestion table
+CREATE OR REPLACE TABLE customer_raw (
+    customer_id NUMBER,
+    first_name  VARCHAR,
+    last_name   VARCHAR,
+    email       VARCHAR,
+    street      VARCHAR,
+    city        VARCHAR,
+    state       VARCHAR,
+    country     VARCHAR
+);
+
+-- =========================================================
+-- Stream (CDC)
+-- =========================================================
+CREATE OR REPLACE STREAM customer_table_changes 
+ON TABLE customer;
